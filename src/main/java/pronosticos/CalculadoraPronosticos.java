@@ -95,4 +95,20 @@ public class CalculadoraPronosticos {
         }
         return suma;
     }
+
+    public double suavizacionExponencial(List<Double> serie, double alfa) {
+        if (alfa < 0 || alfa > 1) {
+            throw new IllegalArgumentException("El parámetro alfa debe estar entre 0 y 1");
+        }
+        if (serie.isEmpty()) {
+            throw new IllegalArgumentException("La serie no puede estar vacía");
+        }
+
+        double pronostico = serie.get(0); // Inicializa con el primer valor de la serie
+        for (int i = 1; i < serie.size(); i++) {
+            pronostico = alfa * serie.get(i) + (1 - alfa) * pronostico;
+        }
+        return pronostico;
+    }
+
 }
