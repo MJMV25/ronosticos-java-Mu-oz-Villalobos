@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import pronosticos.CalculadoraPronosticos;
 
@@ -40,9 +42,11 @@ class AlertasTest {
         assertFalse(calculadora.debeGenerarAlerta(7, UMBRAL));
     }
 
-    @Test
-    @DisplayName("Rechaza un umbral mayor que 100")
-    void rechazaUnUmbralMayorQueCien() {
-        assertThrows(IllegalArgumentException.class, () -> calculadora.debeGenerarAlerta(12, 150));
+    // Se prueban los dos lados del rango para recorrer las dos condiciones del if (rama completa).
+    @ParameterizedTest(name = "umbral = {0}")
+    @ValueSource(doubles = {150, -5})
+    @DisplayName("Rechaza un umbral fuera del rango de 0 a 100")
+    void rechazaUnUmbralFueraDeRango(double umbralInvalido) {
+        assertThrows(IllegalArgumentException.class, () -> calculadora.debeGenerarAlerta(12, umbralInvalido));
     }
 }

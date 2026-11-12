@@ -66,4 +66,10 @@ class SuavizacionExponencialTest {
 
         assertEquals("Alfa debe estar entre 0 y 1", error.getMessage());
     }
+
+    @Test
+    @DisplayName("Rechaza una serie vacía")
+    void rechazaUnaSerieVacia() {
+        assertThrows(IllegalArgumentException.class, () -> calculadora.suavizacionExponencial(List.of(), 0.3));
+    }
 }
