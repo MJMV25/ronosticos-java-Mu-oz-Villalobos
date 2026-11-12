@@ -28,6 +28,33 @@ public class CalculadoraPronosticos {
         return sumar(ultimos) / ventana;
     }
 
+    /**
+     * Pronostica el siguiente periodo con suavización exponencial simple.
+     *
+     * <p>Fórmula: F<sub>t+1</sub> = F<sub>t</sub> + α · (D<sub>t</sub> − F<sub>t</sub>),
+     * empezando con F<sub>2</sub> = D<sub>1</sub>. F es el pronóstico, D la demanda real y
+     * α (alfa) el peso que se le da a la demanda más reciente frente al pronóstico anterior:
+     * con alfa 0 el pronóstico nunca cambia y con alfa 1 es igual a la última demanda.
+     *
+     * <p>Ejemplo: serie [120, 132, 128, 141, 138, 150] y alfa 0.3 → 137.5546.
+     *
+     * @param serie demanda real de cada periodo, del más antiguo al más reciente
+     * @param alfa  constante de suavización, entre 0 y 1 (ambos incluidos)
+     * @return el pronóstico del periodo siguiente al último de la serie
+     */
+    public double suavizacionExponencial(List<Double> serie, double alfa) {
+        validarAlfa(alfa);
+        if (serie.isEmpty()) {
+            throw new IllegalArgumentException("Se necesita al menos un periodo");
+        }
+
+        double pronostico = serie.get(0);
+        for (double demanda : serie.subList(1, serie.size())) {
+            pronostico = pronostico + alfa * (demanda - pronostico);
+        }
+        return pronostico;
+    }
+
     /** Error absoluto medio (MAD): promedio de las diferencias absolutas, en unidades. */
     public double mad(List<Double> real, List<Double> pronostico) {
         validarSeries(real, pronostico);
@@ -88,6 +115,12 @@ public class CalculadoraPronosticos {
         }
     }
 
+    private void validarAlfa(double alfa) {
+        if (alfa < 0 || alfa > 1) {
+            throw new IllegalArgumentException("Alfa debe estar entre 0 y 1");
+        }
+    }
+
     private double sumar(List<Double> valores) {
         double suma = 0;
         for (double valor : valores) {
@@ -95,20 +128,4 @@ public class CalculadoraPronosticos {
         }
         return suma;
     }
-
-    public double suavizacionExponencial(List<Double> serie, double alfa) {
-        if (alfa < 0 || alfa > 1) {
-            throw new IllegalArgumentException("El parámetro alfa debe estar entre 0 y 1");
-        }
-        if (serie.isEmpty()) {
-            throw new IllegalArgumentException("La serie no puede estar vacía");
-        }
-
-        double pronostico = serie.get(0); // Inicializa con el primer valor de la serie
-        for (int i = 1; i < serie.size(); i++) {
-            pronostico = alfa * serie.get(i) + (1 - alfa) * pronostico;
-        }
-        return pronostico;
-    }
-
 }
