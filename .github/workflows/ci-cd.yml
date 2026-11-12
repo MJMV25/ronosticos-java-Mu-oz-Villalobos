@@ -19,6 +19,27 @@ on:
 
 jobs:
   # ---------------------------------------------------------------------------
+  # CI: análisis estático
+  # ---------------------------------------------------------------------------
+  analisis-estatico:
+    name: Análisis estático
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v6
+
+      - name: Instalar Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      # Revisa código sobrante, nombres y complejidad sin ejecutar el código.
+      - name: Revisar el código con Checkstyle
+        run: mvn -B checkstyle:check
+
+  # ---------------------------------------------------------------------------
   # CI: pruebas unitarias
   # ---------------------------------------------------------------------------
   pruebas-unitarias:
@@ -44,13 +65,55 @@ jobs:
         run: mvn -B test -Dtest='**/unitarias/*Test'
 
   # ---------------------------------------------------------------------------
+  # CI: pruebas BDD (escenarios de Cucumber en src/test/resources/features)
+  # ---------------------------------------------------------------------------
+  pruebas-bdd:
+    name: Pruebas BDD
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v6
+
+      - name: Instalar Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Ejecutar escenarios BDD
+        run: mvn -B test -Dtest=RunCucumberTest
+
+  # ---------------------------------------------------------------------------
+  # CI: cobertura (todas las pruebas + verificación del mínimo de JaCoCo)
+  # ---------------------------------------------------------------------------
+  cobertura:
+    name: Cobertura
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v6
+
+      - name: Instalar Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      # verify corre todas las pruebas, genera el reporte y falla si la
+      # cobertura de líneas o de ramas queda por debajo del 90 %.
+      - name: Medir y verificar la cobertura
+        run: mvn -B verify
+
+  # ---------------------------------------------------------------------------
   # CD: despliegue simulado
   # ---------------------------------------------------------------------------
   despliegue:
     name: Despliegue (simulado)
     # needs: el despliegue solo corre si todos los jobs listados terminaron bien.
     # Si una prueba falla, este job no se ejecuta y nada llega a producción.
-    needs: [pruebas-unitarias]
+    needs: [analisis-estatico, pruebas-unitarias, pruebas-bdd, cobertura]
     # Solo se despliega lo que entra a main, nunca desde un pull request.
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
